@@ -1,6 +1,9 @@
+import asyncio
+from pprint import pprint
 from random import choice
-import json
 from bs4 import BeautifulSoup as bs
+from aiohttp import ClientSession
+import json
 import requests
 
 headers = [
@@ -27,9 +30,25 @@ def search_links(url):
 
 def result(url):
     links = search_links(url)
-    data = {}
-    for link in links:
-        href = f'https://api.domainsdb.info/v1/domains/search?domain={link}'
-        res = requests.get(href).json()
-        data.setdefault(link, res.get('domains'))
-    return data
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    future = asyncio.ensure_future(run(links))
+    data_links = loop.run_until_complete(future)
+    data = {link: d for link, d in zip(links, data_links)}
+    return tuple(data.items())
+
+async def run(links):
+    async with ClientSession() as session:
+        tasks = []
+        for link in links:
+            href = f'https://api.domainsdb.info/v1/domains/search?domain={link}'
+            task = async_req(href, session)
+            tasks.append(task)
+        return await asyncio.gather(*tasks)
+
+async def async_req(href, session):
+    async with session.get(href) as response:
+        return await response.json()
+
+
+result('https://google.com')
