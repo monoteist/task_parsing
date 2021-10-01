@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 
-# Create your views here.
+from .parsing import result
 
 
 class HomePage(View):
@@ -10,5 +10,6 @@ class HomePage(View):
 
     def post(self, request):
         url = request.POST.get('url')
-        return render(request, 'result.html')
+        data = result(url)
+        return render(request, 'result.html', {'data': data})
         
