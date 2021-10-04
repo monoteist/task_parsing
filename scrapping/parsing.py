@@ -49,6 +49,3 @@ async def run(links):
 async def async_req(href, session):
     async with session.get(href) as response:
         return await response.json()
-
-
-result('https://google.com')
